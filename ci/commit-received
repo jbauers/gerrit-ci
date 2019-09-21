@@ -1,0 +1,10 @@
+#!/bin/sh
+#  commit-received --project <project name>
+#                  --refname <refname>
+#                  --uploader <uploader>
+#                  --uploader-username <username>
+#                  --oldrev <sha1>
+#                  --newrev <sha1>
+#                  --cmdref <refname>
+
+echo "$1 - $2 - $3 - $4 - $5 - $6 - $7"

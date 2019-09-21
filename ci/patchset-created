@@ -1,0 +1,53 @@
+#!/bin/sh
+# Gerrit passes the following arguments to this script. Note that this includes the flags,
+# but we're only interested in the values, so we're going in multiples of 2 to consume
+# the values.
+#
+# patchset-created --change <change id> 
+#                  --kind <change kind>
+#                  --change-url <change url>
+#                  --change-owner <change owner>
+#                  --change-owner-username <username>
+#                  --project <project name>
+#                  --branch <branch>
+#                  --topic <topic>
+#                  --uploader <uploader>
+#                  --uploader-username <username>
+#                  --commit <sha1>
+#                  --patchset <patchset id> 
+
+echo "$2 - $4 - $6 - $8 - ${10} - ${12} - ${14} - ${16} - ${18} - ${20} - ${22} - ${24}"
+echo "${GIT_DIR}"
+
+# Isolate workspace and clean up.
+tmp_dir=$(mktemp -d)
+clean() {
+  cd /tmp
+  rm -rf $tmp_dir
+}
+trap clean EXIT
+
+# We're doing a local clone into 'tmp_dir', where GIT_DIR is the location of the Git
+# source for the project under '/var/gerrit/git'. The env var is provided by Gerrit.
+cd $tmp_dir && git clone --recurse-submodules "${GIT_DIR}"
+cd "${12}" && git --work-tree "${PWD}" checkout "${22}"
+
+# Gerrit CLI only works over SSH - we're on the same machine as the gerrit user,
+# so this is a bit stupid, but it works. The filename can be changed of course,
+# we're using 'ci.sh' for the CI script here.
+# TODO: Ansible, Docker, Python for more advanced stuff + secrets?
+# TODO: Put build log somewhere we can see, just move to a web root?
+if [ -f 'ci.sh' ]; then
+    ./ci.sh | tee "${2}.log"
+    if [ $? == 0 ]; then
+        ssh -i /home/gerrit/.ssh/id_rsa \
+            -o StrictHostKeyChecking=no \
+            -p 29418 gerrit@localhost \
+            gerrit review --verified +1 ${22}
+    else
+        ssh -i /home/gerrit/.ssh/id_rsa \
+            -o StrictHostKeyChecking=no \
+            -p 29418 gerrit@localhost \
+            gerrit review --verified -1 ${22}
+    fi
+fi

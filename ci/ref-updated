@@ -1,0 +1,9 @@
+#!/bin/sh
+# ref-updated --oldrev <old rev>
+#             --newrev <new rev>
+#             --refname <ref name>
+#             --project <project name>
+#             --submitter <submitter>
+#             --submitter-username <username>
+
+echo "$1 - $2 - $3 - $4 - $5 - $6"
